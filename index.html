@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kiinnostavia faktoja</title>
+<style>
+:root{--bg:#fff7e6;--ink:#2b2350;--card:#ffffff;--shadow:rgba(43,35,80,.18);box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1d1838;--ink:#fff4dc;--card:#2d2656;--shadow:rgba(0,0,0,.4)}}
+:root[data-theme="dark"]{--bg:#1d1838;--ink:#fff4dc;--card:#2d2656;--shadow:rgba(0,0,0,.4)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Baloo 2","Comic Sans MS","Trebuchet MS",system-ui,sans-serif;min-height:100vh}
+.wrap{max-width:900px;margin:0 auto;padding:16px;position:relative;z-index:1}
+.top{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.bar{flex:1;height:12px;background:var(--shadow);border-radius:9px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:#ff7a59;border-radius:9px;transition:width .4s}
+.count{font-weight:700}
+.slide{display:none;text-align:center;animation:pop .4s}
+.slide.on{display:block}
+@keyframes pop{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:none}}
+h1{font-size:clamp(30px,7vw,56px);margin:.2em 0}
+h2{font-size:clamp(24px,5vw,38px);margin:.2em 0 .1em}
+.big{font-size:clamp(70px,18vw,130px);animation:bob 2s infinite ease-in-out}
+@keyframes bob{50%{transform:translateY(-10px) rotate(4deg)}}
+p.sub{font-size:18px;margin:.3em 0 1em}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:12px}
+.card{perspective:700px;height:280px;cursor:pointer;border:0;background:none;padding:0;font:inherit;color:inherit}
+.in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
+.card.flip .in{transform:rotateY(180deg)}
+.f,.b{position:absolute;inset:0;backface-visibility:hidden;border-radius:20px;padding:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 6px 0 var(--shadow);overflow:auto}
+.f{background:var(--c)}
+.f span{font-size:36px}
+.f b{font-size:14px;line-height:1.2;color:#2b2350}
+.f small{display:block;margin-top:8px;font-size:13px;line-height:1.35;text-align:left;color:#2b2350;font-weight:700}
+.b{background:var(--card);transform:rotateY(180deg);font-size:18px;font-weight:800;line-height:1.3}
+.nav{display:flex;justify-content:space-between;gap:10px;margin:18px 0}
+button.go{font:inherit;font-weight:800;font-size:18px;border:0;border-radius:30px;padding:12px 26px;background:#ff7a59;color:#fff;box-shadow:0 5px 0 #c4502f;cursor:pointer}
+button.go:disabled{opacity:.35;cursor:default}
+button.go:active{transform:translateY(3px);box-shadow:0 2px 0 #c4502f}
+.hint{font-size:15px;opacity:.8}
+.menu{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-top:14px}
+.menu button{font:inherit;font-weight:800;font-size:18px;border:0;border-radius:20px;padding:18px 10px;color:#2b2350;background:var(--c);box-shadow:0 5px 0 var(--shadow);cursor:pointer;animation:hop 2.4s infinite ease-in-out}
+.menu button span{display:block;font-size:40px}
+.menu button:hover{transform:scale(1.08)}
+@keyframes hop{50%{transform:translateY(-9px) rotate(-1.5deg)}}
+.fl{position:fixed;top:0;font-size:36px;opacity:.28;pointer-events:none;animation:fly linear infinite;z-index:0}
+@keyframes fly{from{transform:translateY(105vh) rotate(0)}to{transform:translateY(-15vh) rotate(360deg)}}
+.cf{position:fixed;top:-40px;font-size:28px;pointer-events:none;z-index:9;animation:fall 1.8s ease-in forwards}
+@keyframes fall{to{transform:translateY(112vh) rotate(720deg)}}
+#next{animation:pulse 1.4s infinite ease-in-out}
+@keyframes pulse{50%{transform:scale(1.09)}}
+@media (prefers-reduced-motion:reduce){.fl,#next,.menu button,.big{animation:none}}
+.bump{animation:bump .4s}@keyframes bump{50%{transform:scale(1.6)}}
+.q{background:var(--card);border-radius:20px;padding:12px;margin:10px 0;box-shadow:0 5px 0 var(--shadow);text-align:left}
+.opts{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.opt{font:inherit;font-weight:700;border:0;border-radius:20px;padding:10px 16px;background:#ffd36e;color:#2b2350;cursor:pointer}
+.opt:hover{transform:scale(1.06)}
+.opt.right{background:#5fd068}.opt.wrong{background:#ff8f8f;opacity:.6}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="top"><div class="bar"><i id="p"></i></div><div class="count" id="st">⭐ 0</div><div class="count" id="n"></div></div>
+<div id="slides"></div>
+<div class="nav"><button class="go" id="prev">← Takaisin</button><button class="go" id="next">Seuraava →</button></div>
+</div>
+<script>
+// [question, right answer, wrong, wrong]
+const S=[
+{t:"Maantieto ja avaruus",e:"🌍",c:"#8fd3ff",f:[
+["Kuinka suuri osa maapallon pinnasta on vettä?","Noin 70 %","Noin 30 %","Noin 90 %"],
+["Kuinka suuri osa maapallon vedestä on makeaa vettä?","Noin 3 %","Noin 20 %","Noin 50 %"],
+["Mikä on maailman suurin maanosa?","Aasia","Afrikka","Eurooppa"],
+["Mikä on pinta-alaltaan maailman suurin maa?","Venäjä","Kanada","Kiina"],
+["Mikä on maailman suurin ja syvin valtameri?","Tyyni valtameri","Atlantin valtameri","Jäämeri"],
+["Mikä joki tunnetaan perinteisesti maailman pisimpänä?","Niili","Amazon","Tonava"],
+["Mikä on maailman suurin kuuma aavikko?","Sahara","Gobin autiomaa","Kalahari"],
+["Mikä on maailman korkein vuori merenpinnasta mitattuna?","Mount Everest","K2","Mont Blanc"],
+["Mikä on maailman pienin valtio?","Vatikaani","Monaco","Malta"],
+["Mikä maa on myös maanosa?","Australia","Japani","Islanti"],
+["Mistä Islanti tunnetaan?","Aktiivisista tulivuorista","Suurista sademetsistä","Korkeista pilvenpiirtäjistä"],
+["Mitä Pohjoisnavan alla on?","Kelluvaa merijäätä","Korkeita vuoria","Aavikkoa"],
+["Millä planeetalla päivä on pidempi kuin vuosi?","Venuksessa","Marsissa","Jupiterissa"],
+["Miksi Etelämannerta kutsutaan aavikoksi?","Siellä sataa hyvin vähän","Siellä on hyvin kuuma","Siellä kasvaa paljon puita"],
+["Mitä Kuussa tapahtuu joskus?","Kuunjäristyksiä","Tulivuorenpurkauksia","Lumimyrskyjä"],
+["Mikä suuri kaupunki sijaitsee sekä Euroopassa että Aasiassa?","Istanbul","Pariisi","Lontoo"],
+["Miksi astronauttien jalanjäljet voivat säilyä Kuussa pitkään?","Kuussa ei ole tuulta","Kuussa sataa paljon","Kuussa on voimakkaita myrskyjä"],
+["Kuinka monta saarta Filippiineillä on suunnilleen?","Yli 7 000","Yli 700","Noin 100"],
+["Kuinka monta maanosaa maailmassa on?","Seitsemän","Viisi","Kahdeksan"],
+["Mikä maa on kartalla saappaan muotoinen?","Italia","Espanja","Kreikka"],
+["Mikä on maapallon kylmin paikka?","Antarktis","Grönlanti","Islanti"],
+["Mikä on meidän galaksimme nimi?","Linnunrata","Andromeda","Aurinkokunta"],
+["Mikä planeetta tunnetaan punaisena planeettana?","Mars","Venus","Jupiter"],
+["Kuinka monta planeettaa aurinkokunnassamme on?","Kahdeksan","Kuusi","Yhdeksän"],
+["Kuka oli ensimmäinen ihminen, joka käveli Kuussa?","Neil Armstrong","Yuri Gagarin","Galileo Galilei"],
+["Millä mantereella Egypti sijaitsee?","Afrikassa","Euroopassa","Aasiassa"],
+["Mikä suuri aavikko sijaitsee Aasiassa ja tunnetaan dinosaurusten fossiileista?","Gobi","Sahara","Kalahari"]]},
+{t:"Kielet ja viestintä",e:"💬",c:"#c7a6ff",f:[
+["Kuinka monta kieltä maailmassa puhutaan nykyään suunnilleen?","Yli 7 000","Yli 700","Yli 20 000"],
+["Onko olemassa yksi yhteinen viittomakieli koko maailmassa?","Ei, viittomakielet vaihtelevat maittain","Kyllä, kaikkialla sama","Vain Euroopassa"],
+["Onko kaikilla kielillä yleisesti käytössä oleva kirjoitusjärjestelmä?","Ei, joillakin kielillä ei ole laajasti käytettyä kirjoitusjärjestelmää","Kyllä","Vain vanhoilla kielillä"],
+["Mihin suuntaan arabiaa kirjoitetaan?","Oikealta vasemmalle","Vasemmalta oikealle","Ylhäältä alas"],
+["Mitä kielille tapahtuu ajan kuluessa?","Ne muuttuvat","Ne eivät muutu","Ne katoavat aina"],
+["Missä soittimessa on yleensä 88 kosketinta?","Pianossa","Kitarassa","Viulussa"]]},
+{t:"Eläimet",e:"🐙",c:"#ffd36e",f:[
+["Kuinka monta sydäntä mustekalalla on?","Kolme","Yksi","Neljä"],
+["Minkä väristä verta mustekalalla on?","Sinistä","Punaista","Vihreää"],
+["Onko mustekalalla luita?","Ei ole lainkaan luita","On paljon luita","On pieni luuranko"],
+["Onko meritähdellä keskushermoston kaltainen aivot?","Ei ole keskitettyjä aivoja","Kyllä, suuret aivot","Viisi aivoa"],
+["Miten muurahainen hengittää?","Pienten hengitysaukkojen kautta","Keuhkoilla","Kiduksilla"],
+["Millä perhonen maistaa?","Jaloillaan","Tuntosarvilla","Siivillä"],
+["Mitä pingviinit osaavat erityisen hyvin?","Uida","Lentää korkealla","Kiipeillä puissa"],
+["Millaiset suut kilpikonnilla on?","Kova nokka","Terävät hampaat","Pitkä kieli"],
+["Kuka merihevosista kantaa poikasia erityisessä pussissa?","Koiras","Naaras","Kumpikaan"],
+["Mitä krokotiili ei pysty tekemään?","Työntämään kieltään ulos","Uimaan","Sukeltamaan"],
+["Mitä erityistä koalan sormenjäljissä on?","Ne muistuttavat ihmisen sormenjälkiä","Ne ovat aina sinisiä","Ne ovat täysin sileät"],
+["Mitä norsut eivät pysty tekemään?","Hyppäämään","Uimaan","Kävelemään"],
+["Kuinka pitkään etana voi levätä kuivissa oloissa?","Jopa kolme vuotta","Yhden päivän","Aina vain tunnin"],
+["Miten sammakko saa vettä?","Se imee vettä ihonsa kautta","Se juo vain suullaan","Se ei tarvitse vettä"],
+["Mikä on suurin eläin, joka on koskaan elänyt maapallolla?","Sinivalas","Afrikannorsu","Kirahvi"],
+["Miten delfiini voi nukkua?","Yksi silmä auki","Seisomalla puussa","Molemmat silmät aina kiinni"],
+["Mikä on toukan muuttuminen perhoseksi?","Muodonvaihdos","Kasvu","Lisääntyminen"],
+["Kuinka monta luuta aikuisella ihmisellä on?","206","106","306"]]},
+{t:"Ruokafaktoja",e:"🍌",c:"#a8e6a1",f:[
+["Mikä seuraavista on kasvitieteellisesti marja?","Banaani","Mansikka","Omena"],
+["Mikä osa parsakaalista syödään?","Avaamattomat kukkanuput","Juuret","Siemenet"],
+["Mikä avokado oikeastaan on?","Hedelmä","Juures","Pähkinä"],
+["Voiko hunaja säilyä hyvin pitkään oikein säilytettynä?","Kyllä","Ei, vain yhden päivän","Ei koskaan"],
+["Mihin maapähkinä kuuluu kasvitieteellisesti?","Palkokasveihin","Pähkinöihin","Viljoihin"],
+["Minkä värisiä porkkanat olivat usein alun perin?","Violetteja, keltaisia ja valkoisia","Vain oransseja","Vain mustia"],
+["Kuinka monen mehiläisen elinaikaisen työn tulosta yksi teelusikallinen hunajaa suunnilleen vastaa?","Noin 12 mehiläisen","Yhden mehiläisen","Sadan mehiläisen"]]}
+];
+const RD=[
+["Minulla on kaupunkeja, mutta ei taloja. Minulla on jokia, mutta ei vettä. Mikä minä olen?","Kartta"],
+["Mikä kasvaa koko ajan, mutta ei koskaan pienene?","Ikä"],
+["Minulla on hampaat, mutta en voi purra. Mikä minä olen?","Kampa"],
+["Mikä on aina edessäsi, mutta et voi koskaan nähdä sitä?","Tulevaisuus"]];
+const EM=[["💧","🚰","🌏","🗺️","🌊","🏞️","🏜️","🏔️","⛪","🦘","🌋","🧊","🪐","🐧","🌙","🕌","👣","🏝️","🌐","🍕","❄️","🌌","🔴","☀️","👨‍🚀","🐫","🦖"],["🗣️","🤟","✍️","📖","🔄","🎹"],["🐙","💙","🦴","⭐","🐜","🦋","🐧","🐢","🐠","🐊","🐨","🐘","🐌","🐸","🐋","🐬","🐛","💀"],["🍌","🥦","🥑","🍯","🥜","🥕","🐝"]];
+S.forEach((s,k)=>s.f.forEach((f,j)=>f.push(EM[k][j])));
+["🗺️","🎂","💇","🔮"].forEach((e,j)=>RD[j].push(e));
+const sh=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const card=(c,e,q,a,o=[])=>`<button class="card" style="--c:${c}"><div class="in"><div class="f"><span>${e}</span><b>${q}</b>${o.length?`<small>${o.map((x,i)=>"ABC"[i]+") "+x).join("<br>")}</small>`:""}</div><div class="b">✅ ${a}</div></div></button>`;
+const slides=document.getElementById('slides');
+const T=[...S.map(s=>({t:s.t,e:s.e,c:s.c})),{t:"Arvoitukset",e:"🧩",c:"#ffb3c7"}];
+let html=`<section class="slide"><div class="big">🤩</div><h1>Kiinnostavia faktoja</h1><p class="sub">Yllättäviä faktoja maailmastamme</p><p class="hint">Valitse aihe tai paina Seuraava!</p><div class="menu">${T.map((s,i)=>`<button style="--c:${s.c}" data-go="${i+1}"><span>${s.e}</span>${s.t}</button>`).join('')}</div></section>`;
+S.forEach(s=>{html+=`<section class="slide"><h2>${s.e} ${s.t}</h2><p class="hint">Valitse vastaus ja napauta korttia niin näet oikean! Järjestys on joka kerta eri.</p><div class="grid">${sh(s.f).map(f=>card(s.c,f[4],f[0],f[1],sh([f[1],f[2],f[3]]))).join('')}</div></section>`});
+html+=`<section class="slide"><h2>🧩 Arvoitukset</h2><p class="hint">Mieti ensin, käännä sitten kortti!</p><div class="grid">${sh(RD).map(r=>card("#ffb3c7",r[2],r[0],r[1])).join('')}</div></section>`;
+const pool=[];S.forEach(s=>s.f.forEach(f=>pool.push(f)));
+const Q=sh(pool).slice(0,10).map(f=>{const o=sh(f);return[f[0],o,o.indexOf(f[1])]}).map(q=>q);
+// options: shuffle [right,w1,w2]; answer index = position of right answer
+Q.forEach((q,k)=>{const f=pool.find(x=>x[0]===q[0]);q[1]=sh([f[1],f[2],f[3]]);q[2]=q[1].indexOf(f[1]);q[3]=f[4]});
+html+=`<section class="slide"><h2>🎯 Visa-aika!</h2><p class="hint">10 satunnaista kysymystä. Oikea vastaus antaa 3 tähteä!</p>${Q.map((q,k)=>`<div class="q"><b>${q[3]} ${k+1}. ${q[0]}</b><div class="opts">${q[1].map((o,j)=>`<button class="opt" data-q="${k}" data-o="${j}">${o}</button>`).join('')}</div></div>`).join('')}</section>`;
+html+=`<section class="slide"><div class="big">🎉</div><h1>Hienoa työtä!</h1><p class="sub">Nyt tiedät paljon hauskoja faktoja. Mikä yllätti eniten?</p><button class="go" id="again">Uusi kierros (uusi järjestys)</button></section>`;
+slides.innerHTML=html;
+const all=[...document.querySelectorAll('.slide')];let i=0;
+function show(k){i=Math.max(0,Math.min(all.length-1,k));all.forEach((s,j)=>s.classList.toggle('on',j===i));
+document.getElementById('p').style.width=((i+1)/all.length*100)+'%';
+document.getElementById('n').textContent=(i+1)+' / '+all.length;
+document.getElementById('prev').disabled=i===0;document.getElementById('next').disabled=i===all.length-1;scrollTo(0,0);if(i===all.length-1)boom(40)}
+document.getElementById('prev').onclick=()=>show(i-1);
+document.getElementById('next').onclick=()=>show(i+1);
+document.getElementById('again').onclick=()=>location.reload();
+const boom=n=>{const E=['⭐','🎉','🎈','✨','🍬'];for(let k=0;k<n;k++){const d=document.createElement('div');d.className='cf';d.textContent=E[k%5];d.style.left=Math.random()*96+'vw';d.style.animationDelay=Math.random()*.5+'s';document.body.appendChild(d);setTimeout(()=>d.remove(),2600)}};
+['☁️','⭐','🎈','🦋','🌈','🐠'].forEach((e,k)=>{const d=document.createElement('div');d.className='fl';d.textContent=e;d.style.left=(k*17+4)+'vw';d.style.animationDuration=(14+k*3)+'s';d.style.animationDelay=(-k*4)+'s';document.body.appendChild(d)});
+let stars=0;const addStar=n=>{stars+=n;boom(n*5);const s=document.getElementById('st');s.textContent='⭐ '+stars;s.classList.remove('bump');void s.offsetWidth;s.classList.add('bump')};
+document.addEventListener('click',e=>{const c=e.target.closest('.card');if(c){c.classList.toggle('flip');if(!c.dataset.seen){c.dataset.seen=1;addStar(1)}}const o=e.target.closest('.opt');if(o&&!o.parentNode.dataset.done){const ok=+o.dataset.o===Q[+o.dataset.q][2];o.classList.add(ok?'right':'wrong');if(ok){o.parentNode.dataset.done=1;addStar(3)}else o.disabled=true}const g=e.target.closest('[data-go]');if(g)show(+g.dataset.go)});
+document.addEventListener('keydown',e=>{if(e.key==='ArrowRight')show(i+1);if(e.key==='ArrowLeft')show(i-1)});
+show(0);
+</script>
+</body>
+</html>
